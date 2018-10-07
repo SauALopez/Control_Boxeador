@@ -1,7 +1,6 @@
 import pygame
 import serial
-
-
+git=1
 Incio=True
 estado=1
 tiempo=b'1'
