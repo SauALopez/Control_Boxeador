@@ -2,7 +2,7 @@ import pygame
 import serial
 
 Incio=True
-estado=2
+estado=0
 tiempo=b'1'
 caja = b'0'
 ser = serial.Serial("COM6",115200)
@@ -11,7 +11,7 @@ pygame.init()
 screen = pygame.display.set_mode((300,300))
 screen.fill((245,230,170))
 pygame.display.set_caption('CONTROL BOXEADOR')
-fuente = pygame.font.SysFont('comicsans',40)
+fuente = pygame.font.SysFont('comicsans',35)
 fuenteD = pygame.font.SysFont('comicsans',25)
 
 print ("Captando una funcion")
@@ -33,7 +33,7 @@ class button():
         pygame.draw.rect(screen, self.color, (self.x,self.y,self.width,self.height),0)
 
         if self.text!='':
-            font = pygame.font.SysFont('comicsans',20)
+            font = pygame.font.SysFont('comicsans',25)
             text = font.render(self.text,1,(0,0,0))
             screen.blit(text,(self.x + (self.width/2 - text.get_width()/2), self.y + (self.height/2 - text.get_height()/2)))
             
@@ -44,27 +44,56 @@ class button():
                 return True
         return False
 
+class buttonS():
+    def __init__(self, color, x, y, width, height, text=''):
+        self.color = color
+        self.x = x
+        self.y = y
+        self.width = width
+        self.height = height
+        self.text = text
+
+    def draw(self,screen,outline=None):
+
+        if outline:
+            pygame.draw.rect(screen, outline, (self.x-2, self.y-2, self.width+4, self.height+4), 0)
+        pygame.draw.rect(screen, self.color, (self.x,self.y,self.width,self.height),0)
+
+        if self.text!='':
+            font = pygame.font.SysFont('comicsans',15)
+            text = font.render(self.text,1,(255,255,255))
+            screen.blit(text,(self.x + (self.width/2 - text.get_width()/2), self.y + (self.height/2 - text.get_height()/2)))
+            
+    def isOver (self,pos):
+
+        if pos[0] > self.x and  pos[0] < self.x + self.width:
+            if pos[1] > self.y and pos[1] < self.y + self.height:
+                return True
+        return False    
+
 def Window0():
     screen.fill((245,230,170))
+    ButtonSync.draw(screen)
     caja1Button.draw(screen)
     caja2Button.draw(screen)
     caja3Button.draw(screen)
-    textEstado = fuente.render("ESTADO 0",0,(0,0,0))
-    screen.blit(textEstado,(80,40))
+    textEstado = fuente.render("ESTADO AUTOMATICO",0,(0,0,0))
+    screen.blit(textEstado,(20,40))
     txt = fuenteD.render("SELECCIONE CAJA:",0,(0,0,0))
     screen.blit(txt, (80,150))
     
 
 def Window1():
     screen.fill((187,230,170))
+    ButtonSync.draw(screen)
     ButtonW.draw(screen)
     ButtonS.draw(screen)
     ButtonA.draw(screen)
     ButtonD.draw(screen)
     ButtonR.draw(screen)
     ButtonF.draw(screen)
-    textEstado = fuente.render("ESTADO 1",0,(0,0,0))
-    screen.blit(textEstado,(80,40))
+    textEstado = fuente.render("ESTADO MANUAL",0,(0,0,0))
+    screen.blit(textEstado,(20,40))
     txt = fuenteD.render("BASE",0,(0,0,0))
     screen.blit(txt, (30,165))
     txt = fuenteD.render("BRAZO",0,(0,0,0))
@@ -74,9 +103,10 @@ def Window1():
     
 def Window2():
     screen.fill((215,230,170))
+    ButtonSync.draw(screen)
     ButtonTime.draw(screen)
-    textEstado = fuente.render("ESTADO 2",0,(0,0,0))
-    screen.blit(textEstado,(80,40))
+    textEstado = fuente.render("ESTADO BOXEADOR",0,(0,0,0))
+    screen.blit(textEstado,(20,40))
     txt = fuenteD.render("Tiempo en segundos de:",0,(0,0,0))
     screen.blit(txt, (60,130))
 
@@ -92,7 +122,9 @@ ButtonD = button((255,255,255), 110, 200, 80, 50, 'D')
 ButtonR = button((255,255,255), 200, 100, 80, 50, 'R')
 ButtonF = button((255,255,255), 200, 200, 80, 50, 'F')
 
-ButtonTime = button((255,255,255), 120, 160, 80, 50, '1')
+ButtonTime = button((255,255,255), 120, 160, 40, 40, '1')
+
+ButtonSync = buttonS((255,255,255), 5, 5, 28, 10, 'SYNC')
 
 while Incio:
     if estado == 0:
@@ -122,7 +154,16 @@ while Incio:
             Incio =False
             pygame.quit()
             quit()
-                          
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            if ButtonSync.isOver(pos):
+                print('SOLICITAR SINCRONIZACION DE ESTADO ACTUAL')
+                ser.write(b'Q')
+        if event.type == pygame.MOUSEMOTION:
+            if ButtonSync.isOver(pos):
+                ButtonSync.color = (0,180,250)
+            else:
+                ButtonSync.color = (0,0,0)
+                
         if(estado == 0):
             
             if event.type == pygame.MOUSEBUTTONDOWN:
@@ -244,6 +285,7 @@ while Incio:
             
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if ButtonTime.isOver(pos):
+                    ser.write(tiempo)
                     print('TIEMPO ENVIADO')
                     
             if event.type == pygame.MOUSEMOTION:
